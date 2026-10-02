@@ -1,7 +1,6 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <cassert>
-#include <csignal>
 #include <cstdio>
 #include <string>
 #include <iostream>
@@ -23,11 +22,9 @@ size_t send(int& err, int wr, const char* b, size_t k)
 
 int main()
 {
-  signal(SIGPIPE, SIG_IGN);
-
   std::string line;
   std::getline(std::cin, line);
-  line.push_back('\n');
+  line += '\n';
 
   int pps[2] = {}, err = pipe(pps);
   assert(!err);
@@ -48,14 +45,14 @@ int main()
 
   err = close(rd);
   assert(!err);
- size_t sent = send(err, wr, (const char*)&n, sizeof n);
-  assert(sent == sizeof n);
-  sent = send(err, wr, line.data(), line.size());
-  assert(sent == line.size());
+  size_t n = line.size();
+  send(err, wr, (const char*)&n, sizeof n);
+  assert(err > 0);
+  send(err, wr, line.c_str(), n);
+  assert(err > 0);
 
   err = close(wr);
   assert(!err);
   err = waitpid(pid, 0, 0);
   assert(err == pid);
-  return 0;
 }

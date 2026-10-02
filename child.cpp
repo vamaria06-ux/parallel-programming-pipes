@@ -1,19 +1,20 @@
 #include <unistd.h>
+#include <sys/wait.h>
 #include <cassert>
 #include <cstdio>
 #include <cstdlib>
-#include <string
 
 size_t recv(int& err, int rd, char* b, size_t k)
 {
   size_t r = 0;
-  while (r < k) {
-  err = read(rd, b + r, k - r);
-  if (err < 0)
-  { 
-    break;
-  }
-  r += err;
+  while (r < k)
+  {
+    err = read(rd, b + r, k - r);
+    if (err < 0)
+    { 
+      break;
+    }
+    r += err;
   }
   return r;
 }
@@ -26,16 +27,16 @@ int main(int argc, char** argv)
   assert(rd > 0);
 
   size_t n = 0;
-  size_t got = recv(err, rd, (char*)&n, sizeof n);
-  assert(got == sizeof n);
+  recv(err, rd, (char*)&n, sizeof n);
+  assert(err > 0);
 
-  std::string msg(n, '\0');
-  got = recv(err, rd, &msg[0], n);
-  assert(got == n);
+  char* msg = new char[n + 1]{};
+  recv(err, rd, msg, n);
+  assert(err > 0);
 
   err = close(rd);
   assert(!err);
-
-  fwrite(msg.data(), 1, msg.size(), stdout);
-  return 0;
+  err = printf("%s", msg);
+  assert(err > 0);
+  delete[] msg;
 }
