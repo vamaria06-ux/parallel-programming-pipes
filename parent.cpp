@@ -1,6 +1,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <cassert>
+#include <csignal>
 #include <cstdio>
 #include <string>
 #include <iostream>
@@ -47,11 +48,13 @@ int main()
 
   err = close(rd);
   assert(!err);
-  size_t sent = send(err, wr, line.data(), line.size());
+ size_t sent = send(err, wr, (const char*)&n, sizeof n);
+  assert(sent == sizeof n);
+  sent = send(err, wr, line.data(), line.size());
   assert(sent == line.size());
+
   err = close(wr);
   assert(!err);
-
   err = waitpid(pid, 0, 0);
   assert(err == pid);
   return 0;
